@@ -1,8 +1,6 @@
 // Build: g++ -std=c++17 -Wall -Wextra -Wshadow -O3 *.cpp -o pa2
 #include <cstdio>
 #include <cstdlib>
-#include <cerrno>
-#include <cstring>
 #include "pa2.hpp"
 
 static std::FILE* xfopenw(const char* path) {
@@ -24,17 +22,19 @@ int main(int argc, char** argv) {
     const char* out3path = argv[4];
     const char* out4path = argv[5];
 
-    // 1) Parse → slicing tree (leaves keep only the FIRST (w,h))
-    Node* root = parse_postorder_file(in_path);
+    // 1) Parse → slicing tree (leaves store FIRST (w,h)), also keep input-order leaves
+    std::vector<Node*> leaves_in_input_order;
+    Node* root = parse_postorder_file(in_path, leaves_in_input_order);
     if (!root) {
         std::fprintf(stderr, "Parse failed\n");
         return 1;
     }
 
-    // 2) Compute sizes for FIRST-impl pass
+    // 2) Compute sizes and assign coordinates for FIRST-impl pass
     compute_sizes_first_impl(root);
+    assign_coords_first_impl(root, /*x0=*/0, /*y0=*/0);
 
-    // 3) Open outputs (create empty files for 2..4 for now)
+    // 3) Open outputs
     std::FILE* f1 = xfopenw(out1path);
     std::FILE* f2 = xfopenw(out2path);
     std::FILE* f3 = xfopenw(out3path);
@@ -45,7 +45,12 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "Failed writing out_file1\n");
     }
 
-    // 5) Cleanup
+    // 5) Write Output #2 (per-block dims & coords, input order)
+    if (write_block_list(f2, leaves_in_input_order) != 0) {
+        std::fprintf(stderr, "Failed writing out_file2\n");
+    }
+
+    // 6) Cleanup
     std::fclose(f1);
     std::fclose(f2);
     std::fclose(f3);

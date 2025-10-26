@@ -3,9 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <string>
 #include <vector>
-#include <stdexcept>
 
 namespace {
 
@@ -16,14 +14,14 @@ namespace {
 
 Node* new_internal(NodeType t, Node* l, Node* r) {
     Node* x = new Node{};
-    x->t = t; x->l = l; x->r = r; x->label = 0; x->size = {0,0};
+    x->t = t; x->l = l; x->r = r; x->label = 0; x->size = {0,0}; x->x = x->y = 0;
     return x;
 }
 
 Node* new_leaf(int label, int w, int h) {
     Node* x = new Node{};
     x->t = NodeType::LEAF; x->l = x->r = nullptr;
-    x->label = label; x->size = {w,h};
+    x->label = label; x->size = {w,h}; x->x = x->y = 0;
     return x;
 }
 
@@ -68,7 +66,7 @@ void parse_label_and_first_wh(const char* line, int& out_label, int& out_w, int&
 
 } // namespace
 
-Node* parse_postorder_file(const char* path) {
+Node* parse_postorder_file(const char* path, std::vector<Node*>& leaves_out) {
     std::FILE* fin = std::fopen(path, "r");
     if (!fin) { std::perror(path); return nullptr; }
 
@@ -93,14 +91,15 @@ Node* parse_postorder_file(const char* path) {
         } else {
             int label, w, h;
             parse_label_and_first_wh(ln, label, w, h);
-            stk.push_back(new_leaf(label, w, h));
+            Node* leaf = new_leaf(label, w, h);
+            stk.push_back(leaf);
+            leaves_out.push_back(leaf); // record input order
         }
     }
     std::fclose(fin);
 
     if (stk.size() != 1) {
-        // best-effort cleanup if malformed
-        for (Node* n : stk) free_tree(n);
+        for (Node* n : stk) free_tree(n); // best-effort cleanup
         die("Malformed input: stack must end with exactly one node");
     }
     return stk.back();
