@@ -1,0 +1,6 @@
+*.o
+/pa2/out_1.dim
+/pa2/out_1.pck
+/pa2/out_all.dim
+/pa2/out_all.pck
+/pa2/pa2
