@@ -2,7 +2,7 @@ CXX := g++
 CXXFLAGS := -std=c++17 -O3 -Wall -Wextra -Wshadow -Wpedantic
 LDFLAGS :=
 
-SRC := main.cpp parse.cpp pack.cpp tree.cpp output.cpp
+SRC := main.cpp parse.cpp pack.cpp tree.cpp output.cpp opt.cpp
 OBJ := $(SRC:.cpp=.o)
 
 pa2: $(OBJ)

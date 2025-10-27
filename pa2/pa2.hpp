@@ -12,25 +12,36 @@ struct Node {
     NodeType t{};
     Node* l{nullptr};
     Node* r{nullptr};
-    int label{0};      // for leaves
-    Dim size{};        // for leaves: first (w,h); internals: computed
-    int x{0}, y{0};    // lower-left coordinates after placement
+
+    // Leaf info
+    int label{0};
+    Dim size{};                 // used by Outputs #1/2 (first impl & internal computed)
+    std::vector<Dim> impls;     // ALL (w,h) implementations for the leaf
+
+    // Placement (for Output #2, kept as-is)
+    int x{0}, y{0};
+
+    // DP frontier (for Output #3/4)
+    std::vector<Dim> frontier;  // Pareto-optimal (W,H) for this subtree
 };
 
 /* parse.cpp */
-// Also collects leaves in input order into leaves_out.
+// For Outputs #1/2 we still fill 'size' with the FIRST impl.
+// For Outputs #3/4 we also fill 'impls' with ALL impls for each leaf.
 Node* parse_postorder_file(const char* path, std::vector<Node*>& leaves_out);
 
 /* pack.cpp */
 void compute_sizes_first_impl(Node* root);
 void assign_coords_first_impl(Node* root, int x0, int y0);
 
+/* opt.cpp */
+Dim compute_optimal_room_size(Node* root);  // returns best (W,H) by area
+
 /* tree.cpp */
 void free_tree(Node* x);
 
 /* output.cpp */
 int write_room_size(std::FILE* f, Dim d);
-// Write each leaf in input order: label((w,h)(x,y))
 int write_block_list(std::FILE* f, const std::vector<Node*>& leaves);
 
 #endif // PA2_HPP
