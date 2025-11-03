@@ -15,19 +15,23 @@ struct Node {
 
     // Leaf info
     int label{0};
-    Dim size{};                 // used by Outputs #1/2 (first impl & internal computed)
-    std::vector<Dim> impls;     // ALL (w,h) implementations for the leaf
+    Dim size{};                 // used by Outputs #1/2 and after backtrack for #4
+    std::vector<Dim> impls;     // ALL leaf implementations
 
-    // Placement (for Output #2, kept as-is)
+    // Placement (for #2 and #4)
     int x{0}, y{0};
 
-    // DP frontier (for Output #3/4)
-    std::vector<Dim> frontier;  // Pareto-optimal (W,H) for this subtree
+    // --- Frontier for #3/#4 (with backpointers) ---
+    struct FP {
+        Dim d;        // this frontier point's (W,H)
+        int li{-1};   // index into left->frontier_pts (for internals)
+        int ri{-1};   // index into right->frontier_pts (for internals)
+        int impl{-1}; // for leaves: index into impls; for internals: -1
+    };
+    std::vector<FP> frontier_pts;
 };
 
 /* parse.cpp */
-// For Outputs #1/2 we still fill 'size' with the FIRST impl.
-// For Outputs #3/4 we also fill 'impls' with ALL impls for each leaf.
 Node* parse_postorder_file(const char* path, std::vector<Node*>& leaves_out);
 
 /* pack.cpp */
@@ -35,7 +39,12 @@ void compute_sizes_first_impl(Node* root);
 void assign_coords_first_impl(Node* root, int x0, int y0);
 
 /* opt.cpp */
-Dim compute_optimal_room_size(Node* root);  // returns best (W,H) by area
+// Rebuilds frontiers and returns best (W,H) area at root (for Output #3)
+Dim compute_optimal_room_size(Node* root);
+
+// Rebuilds frontiers, picks a min-area root point, BACKTRACKS to set each node's
+// chosen size (and leaf impl), then returns the chosen root (W,H). (For Output #4)
+Dim compute_and_apply_optimal(Node* root);
 
 /* tree.cpp */
 void free_tree(Node* x);
